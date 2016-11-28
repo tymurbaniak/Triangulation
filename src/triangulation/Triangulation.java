@@ -12,6 +12,7 @@ import java.sql.Statement;
 import java.sql.ResultSet;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -101,7 +102,7 @@ public class Triangulation {
      * TODO: will return Location
      * @param wifilist 
      */
-    private static void computeLocation(ArrayList<WiFiNetwork> wifilist) {
+    public static void computeLocation(ArrayList<WiFiNetwork> wifilist) {
         System.out.println("----------------------------------------------------------"+wifilist.get(0).getSsid());
         ArrayList<Powerline> powerlines = new ArrayList<Powerline>();
         Iterator iter = wifilist.iterator();
@@ -117,16 +118,21 @@ public class Triangulation {
 //            System.out.println(powerlines.get(i).getYFactor() + "y = " + powerlines.get(i).getXFactor() + "x + " + powerlines.get(i).getConstant());
 //        }
         ArrayList<double[]> points = new ArrayList<double[]>();
+        double[] tab;
         for(int i = 0; i < powerlines.size(); i++){
             for(int j = i + 1; j < powerlines.size(); j++){
-                points.add(determinants(powerlines.get(i).getXFactor(), 
+                tab = determinants(powerlines.get(i).getXFactor(), 
                                 powerlines.get(i).getYFactor(),
                                 powerlines.get(i).getConstant(),
                                 powerlines.get(j).getXFactor(),
                                 powerlines.get(j).getYFactor(),
-                                powerlines.get(j).getConstant()));
+                                powerlines.get(j).getConstant());
+                if(tab != null) {
+                    points.add(tab);
+                }
             }
         }
+       
         for(int i = 0; i < points.size(); i++){
             if(points.get(i) == null) points.remove(i);
             System.out.println(points.get(i)[0] + " , " + points.get(i)[1]);
@@ -151,6 +157,15 @@ public class Triangulation {
             return null;
         }else{
             double[] tab = {(wx/w),(wy/w)};
+            return tab;
+        }
+    }
+    
+    private static double[] compare(double[] tab){
+        if(tab[0] == tab[1]){
+            System.out.println("test");
+            return null;
+        }else{
             return tab;
         }
     }
