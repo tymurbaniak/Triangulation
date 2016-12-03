@@ -93,12 +93,23 @@ public class Triangulation {
      */
     public static void main(String[] args) {
         ArrayList<Point> points = new ArrayList<Point>();
+//        points.add(new Point(0, 0, 1));
+//        points.add(new Point(0, 2, 1));
+//        points.add(new Point(3, 1, 2));
+//        points.add(new Point(0, 0, 1));
+//        points.add(new Point(0, 2, 1));
+//        points.add(new Point(2, 0, 1));
         points.add(new Point(0, 0, 1));
-        points.add(new Point(0, -2, 1));
-        points.add(new Point(-3, -1, 2));
+        points.add(new Point(0, 2, 1));
+        points.add(new Point(2, 0, 1));
+        points.add(new Point(2, 2, 2));
         ArrayList<Powerline> powerlines = computePowerlines(points);
         for(int i=0; i<powerlines.size(); i++){
-            System.out.println(powerlines.get(i).getYFactor() + "y = " + powerlines.get(i).getXFactor() + "x + " + powerlines.get(i).getConstant());
+            System.out.println(powerlines.get(i).getYFactor() + "*y = " + powerlines.get(i).getXFactor() + "*x + " + powerlines.get(i).getConstant());
+        }
+        ArrayList<Point> computedPoints = figureVertices(powerlines);
+        for(int i = 0; i<computedPoints.size(); i++){
+            System.out.println(computedPoints.get(i).getX() + " , " + computedPoints.get(i).getY());
         }
 //        try {
 //            getNetworks();
@@ -116,7 +127,7 @@ public class Triangulation {
      * @param c2
      * @return returns table of cordinates in form of [double x, double y] or returns null if denouement is indetermined or conflicted
      */
-    private static double[] determinants(double ax1, double by1, double c1, double ax2, double by2, double c2){
+    private static double[] determinants(double ax1, double by1, double c1, double ax2, double by2, double c2) {
         
         double w = (ax1*-by2) - (-by1*ax2);
         double wx = (-c1*-by2) - (-by1*-c2);
@@ -127,6 +138,20 @@ public class Triangulation {
             double[] tab = {(wx/w),(wy/w)};
             return tab;
         }
+    }
+    private static ArrayList<Point> figureVertices(ArrayList<Powerline> lines){
+        ArrayList<Point> mPoints = new ArrayList<Point>();
+        double[] buff = new double[2];
+        for(int i=0; i<lines.size(); i++){
+            for(int j=i+1; j<lines.size(); j++){
+                buff = determinants(lines.get(i).getXFactor(), lines.get(i).getYFactor(), lines.get(i).getConstant(),
+                        lines.get(j).getXFactor(),lines.get(j).getYFactor(),lines.get(j).getConstant());
+                if(buff != null){
+                    mPoints.add(new Point(buff[0], buff[1], 0));
+                }
+            }
+        }
+        return mPoints;
     }
     
     private static ArrayList<Powerline> computePowerlines(ArrayList<Point> mPoints){

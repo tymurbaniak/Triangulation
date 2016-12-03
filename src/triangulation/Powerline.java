@@ -17,9 +17,17 @@ public class Powerline {
     Powerline(Point l1, Point l2){
         rr1 = Math.abs(l1.getR());
         rr2 = Math.abs(l2.getR());
-        yfactor = 1;
-        xfactor = -((l2.getX() - l1.getX())/(l2.getY() - l1.getY()));
-        constant = (((rr1*rr1)-(rr2*rr2)-(l1.getX()*l1.getX())+(l2.getX()*l2.getX())+(l1.getY()*l1.getY())-(l2.getY()*l2.getY()))/(2*(l2.getY() - l1.getY())));
+        
+        if(l2.getY() != l1.getY()){
+            yfactor = 1;
+            xfactor = -((l2.getX() - l1.getX())/(l2.getY() - l1.getY()));
+            constant = (((rr1*rr1)-(rr2*rr2)-(l1.getX()*l1.getX())+(l2.getX()*l2.getX())-(l1.getY()*l1.getY())+(l2.getY()*l2.getY()))/(2*(l2.getY() - l1.getY())));
+        }else{
+            yfactor = 0;
+            xfactor = -1;
+            constant = ((rr1*rr1)-(rr2*rr2)-(l1.getX()*l1.getX())+(l2.getX()*l2.getX())/(2*(l2.getX()-l1.getX())));
+        }
+        
     }
     void showFunction(){
         System.out.println(yfactor + " = " + xfactor + "x + " + constant);
