@@ -28,63 +28,63 @@ public class Triangulation {
      * Will return ArrayList<WiFiNetwork>
      * @throws ClassNotFoundException 
      */
-    static void getNetworks() throws ClassNotFoundException{
-        ArrayList<ArrayList<WiFiNetwork>> groupedNetworks = new ArrayList<ArrayList<WiFiNetwork>>();
-        ArrayList<WiFiNetwork> networkGroupTemp = new ArrayList<WiFiNetwork>();
-        Set<String> ssidSet = new HashSet<String>();
-        Class.forName("org.sqlite.JDBC");
-        Connection connection = null;
-        try{
-            connection = DriverManager.getConnection("jdbc:sqlite:C:/Users/user/Documents/NetBeansProjects/Triangulation/src/res/wifipicker.db");
-            Statement statement = connection.createStatement();
-            statement.setQueryTimeout(30);
-            ResultSet networkList = statement.executeQuery("SELECT * FROM WIFINETWORKS");
-            while(networkList.next()){
-                ssidSet.add(networkList.getString("BSSID"));
-            }
-            //ssidSet.forEach(System.out::println);
-            Iterator iter = ssidSet.iterator();
-            while(iter.hasNext()){
-                ResultSet networkGroup = statement.executeQuery("SELECT * FROM WIFINETWORKS WHERE BSSID = '"+iter.next()+"'");
-                while(networkGroup.next()){
-                    networkGroupTemp.add(new WiFiNetwork(networkList.getString("BSSID"),
-                                            networkList.getString("CAPABILITIES"),
-                                            networkList.getInt("FREQUENCY"),
-                                            networkList.getLong("ID"),
-                                            networkList.getDouble("LATITUDE"),
-                                            networkList.getInt("LEVEL"),
-                                            networkList.getDouble("LONGITUTDE"),
-                                            networkList.getString("SSID"),
-                                            networkList.getString("TIMESTAMPDATETIME"),
-                                            networkList.getBoolean("triangulated")));
-                }
-                computeLocation(networkGroupTemp);
-                networkGroupTemp.clear();
-            }
-            /*
-            while(networkList.next()){
-                System.out.println("SSID: " + networkList.getString("SSID")
-                + " Level: " + networkList.getString("LEVEL")
-                + "Longitude: " + networkList.getString("LONGITUTDE")
-                + "Latitude: " + networkList.getString("LATITUDE"));
-            bufferlist.add(new WiFiNetwork(networkList.getString("BSSID"),
-                                            networkList.getString("CAPABILITIES"),
-                                            networkList.getInt("FREQUENCY"),
-                                            networkList.getLong("ID"),
-                                            networkList.getDouble("LATITUDE"),
-                                            networkList.getInt("LEVEL"),
-                                            networkList.getDouble("LONGITUTDE"),
-                                            networkList.getString("SSID"),
-                                            networkList.getString("TIMESTAMPDATETIME"),
-                                            networkList.getBoolean("triangulated")));
-            }*/
-        }catch(SQLException e){
-            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-            System.exit(0);
-        }
-    }
+//    static void getNetworks() throws ClassNotFoundException{
+//        ArrayList<ArrayList<WiFiNetwork>> groupedNetworks = new ArrayList<ArrayList<WiFiNetwork>>();
+//        ArrayList<WiFiNetwork> networkGroupTemp = new ArrayList<WiFiNetwork>();
+//        Set<String> ssidSet = new HashSet<String>();
+//        Class.forName("org.sqlite.JDBC");
+//        Connection connection = null;
+//        try{
+//            connection = DriverManager.getConnection("jdbc:sqlite:C:/Users/user/Documents/NetBeansProjects/Triangulation/src/res/wifipicker.db");
+//            Statement statement = connection.createStatement();
+//            statement.setQueryTimeout(30);
+//            ResultSet networkList = statement.executeQuery("SELECT * FROM WIFINETWORKS");
+//            while(networkList.next()){
+//                ssidSet.add(networkList.getString("BSSID"));
+//            }
+//            //ssidSet.forEach(System.out::println);
+//            Iterator iter = ssidSet.iterator();
+//            while(iter.hasNext()){
+//                ResultSet networkGroup = statement.executeQuery("SELECT * FROM WIFINETWORKS WHERE BSSID = '"+iter.next()+"'");
+//                while(networkGroup.next()){
+//                    networkGroupTemp.add(new WiFiNetwork(networkList.getString("BSSID"),
+//                                            networkList.getString("CAPABILITIES"),
+//                                            networkList.getInt("FREQUENCY"),
+//                                            networkList.getLong("ID"),
+//                                            networkList.getDouble("LATITUDE"),
+//                                            networkList.getInt("LEVEL"),
+//                                            networkList.getDouble("LONGITUTDE"),
+//                                            networkList.getString("SSID"),
+//                                            networkList.getString("TIMESTAMPDATETIME"),
+//                                            networkList.getBoolean("triangulated")));
+//                }
+//                computeLocation(networkGroupTemp);
+//                networkGroupTemp.clear();
+//            }
+//            /*
+//            while(networkList.next()){
+//                System.out.println("SSID: " + networkList.getString("SSID")
+//                + " Level: " + networkList.getString("LEVEL")
+//                + "Longitude: " + networkList.getString("LONGITUTDE")
+//                + "Latitude: " + networkList.getString("LATITUDE"));
+//            bufferlist.add(new WiFiNetwork(networkList.getString("BSSID"),
+//                                            networkList.getString("CAPABILITIES"),
+//                                            networkList.getInt("FREQUENCY"),
+//                                            networkList.getLong("ID"),
+//                                            networkList.getDouble("LATITUDE"),
+//                                            networkList.getInt("LEVEL"),
+//                                            networkList.getDouble("LONGITUTDE"),
+//                                            networkList.getString("SSID"),
+//                                            networkList.getString("TIMESTAMPDATETIME"),
+//                                            networkList.getBoolean("triangulated")));
+//            }*/
+//        }catch(SQLException e){
+//            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+//            System.exit(0);
+//        }
+//    }
     /*
-    Location weightCenter(ArrayList<powerline> powerlines){
+    Point weightCenter(ArrayList<powerline> powerlines){
         
     }
     */
@@ -92,51 +92,19 @@ public class Triangulation {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        try {
-            getNetworks();
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(Triangulation.class.getName()).log(Level.SEVERE, null, ex);
+        ArrayList<Point> points = new ArrayList<Point>();
+        points.add(new Point(0, 0, 1));
+        points.add(new Point(0, -2, 1));
+        points.add(new Point(-3, -1, 2));
+        ArrayList<Powerline> powerlines = computePowerlines(points);
+        for(int i=0; i<powerlines.size(); i++){
+            System.out.println(powerlines.get(i).getYFactor() + "y = " + powerlines.get(i).getXFactor() + "x + " + powerlines.get(i).getConstant());
         }
-    }
-    /**
-     * TODO: will return Location
-     * @param wifilist 
-     */
-    public static void computeLocation(ArrayList<WiFiNetwork> wifilist) {
-        System.out.println("----------------------------------------------------------"+wifilist.get(0).getSsid());
-        ArrayList<Powerline> powerlines = new ArrayList<Powerline>();
-        Iterator iter = wifilist.iterator();
-        for(int i = 0; i < wifilist.size(); i++){
-            for(int j = i + 1; j < wifilist.size(); j++){
-                powerlines.add(new Powerline(
-                new Location(wifilist.get(i).getLongitude(), wifilist.get(i).getLatitude()),
-                new Location(wifilist.get(j).getLongitude(), wifilist.get(j).getLatitude()),
-                wifilist.get(i).getLevel(), wifilist.get(j).getLevel()));
-            }
-        }
-//        for(int i = 0; i < powerlines.size(); i++){
-//            System.out.println(powerlines.get(i).getYFactor() + "y = " + powerlines.get(i).getXFactor() + "x + " + powerlines.get(i).getConstant());
+//        try {
+//            getNetworks();
+//        } catch (ClassNotFoundException ex) {
+//            Logger.getLogger(Triangulation.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-        ArrayList<double[]> points = new ArrayList<double[]>();
-        double[] tab;
-        for(int i = 0; i < powerlines.size(); i++){
-            for(int j = i + 1; j < powerlines.size(); j++){
-                tab = determinants(powerlines.get(i).getXFactor(), 
-                                powerlines.get(i).getYFactor(),
-                                powerlines.get(i).getConstant(),
-                                powerlines.get(j).getXFactor(),
-                                powerlines.get(j).getYFactor(),
-                                powerlines.get(j).getConstant());
-                if(tab != null) {
-                    points.add(tab);
-                }
-            }
-        }
-       
-        for(int i = 0; i < points.size(); i++){
-            if(points.get(i) == null) points.remove(i);
-            System.out.println(points.get(i)[0] + " , " + points.get(i)[1]);
-        }
     }
     /**
      * 
@@ -150,15 +118,25 @@ public class Triangulation {
      */
     private static double[] determinants(double ax1, double by1, double c1, double ax2, double by2, double c2){
         
-        double w = (ax1*by2) - (by1*ax2);
-        double wx = (c1*by2) - (by1*c2);
-        double wy = (ax1*c2) - (c1*ax2);
+        double w = (ax1*-by2) - (-by1*ax2);
+        double wx = (-c1*-by2) - (-by1*-c2);
+        double wy = (ax1*-c2) - (-c1*ax2);
         if(w==0){
             return null;
         }else{
             double[] tab = {(wx/w),(wy/w)};
             return tab;
         }
+    }
+    
+    private static ArrayList<Powerline> computePowerlines(ArrayList<Point> mPoints){
+        ArrayList<Powerline> listOfPowerlines = new ArrayList<Powerline>();
+        for(int i=0; i<mPoints.size(); i++){
+            for(int j=i+1; j<mPoints.size(); j++){
+                listOfPowerlines.add(new Powerline(mPoints.get(i), mPoints.get(j)));
+            }
+        }
+        return listOfPowerlines;
     }
     
     private static double[] compare(double[] tab){

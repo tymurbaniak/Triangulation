@@ -14,12 +14,12 @@ public class Powerline {
     private double constant;
     private double rr1;
     private double rr2;
-    Powerline(Location l1, Location l2, int r1, int r2){
-        rr1 = Math.abs(r1);
-        rr2 = Math.abs(r2);
+    Powerline(Point l1, Point l2){
+        rr1 = Math.abs(l1.getR());
+        rr2 = Math.abs(l2.getR());
         yfactor = 1;
-        xfactor = -((l2.getLongitude() - l1.getLongitude())/(l2.getLatitude() - l1.getLatitude()));
-        constant = (((rr1*rr1)-(rr2*rr2)-(l1.getLongitude()*l1.getLongitude())+(l2.getLongitude()*l2.getLongitude())-(l1.getLatitude()*l1.getLatitude())+(l2.getLatitude()*l2.getLatitude()))/(l2.getLatitude() - l1.getLatitude()));
+        xfactor = -((l2.getX() - l1.getX())/(l2.getY() - l1.getY()));
+        constant = (((rr1*rr1)-(rr2*rr2)-(l1.getX()*l1.getX())+(l2.getX()*l2.getX())+(l1.getY()*l1.getY())-(l2.getY()*l2.getY()))/(2*(l2.getY() - l1.getY())));
     }
     void showFunction(){
         System.out.println(yfactor + " = " + xfactor + "x + " + constant);
