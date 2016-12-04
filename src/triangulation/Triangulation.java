@@ -100,9 +100,9 @@ public class Triangulation {
 //        points.add(new Point(0, 2, 1));
 //        points.add(new Point(2, 0, 1));
         points.add(new Point(0, 0, 1));
-        points.add(new Point(0, 2, 1));
-        points.add(new Point(2, 0, 1));
-        points.add(new Point(2, 2, 2));
+        points.add(new Point(43, 0, 2));
+        points.add(new Point(0, -40, 4));
+        points.add(new Point(43, -40, 5));
         ArrayList<Powerline> powerlines = computePowerlines(points);
         for(int i=0; i<powerlines.size(); i++){
             System.out.println(powerlines.get(i).getYFactor() + "*y = " + powerlines.get(i).getXFactor() + "*x + " + powerlines.get(i).getConstant());
@@ -111,6 +111,9 @@ public class Triangulation {
         for(int i = 0; i<computedPoints.size(); i++){
             System.out.println(computedPoints.get(i).getX() + " , " + computedPoints.get(i).getY());
         }
+        Point center = computeCentroid(computedPoints);
+        System.out.println("------------");
+        System.out.println(String.valueOf(center.getX()) + " , " + String.valueOf(center.getY()));
 //        try {
 //            getNetworks();
 //        } catch (ClassNotFoundException ex) {
@@ -162,6 +165,39 @@ public class Triangulation {
             }
         }
         return listOfPowerlines;
+    }
+    private static Point computeCentroid(ArrayList<Point> mPoints){
+    Point centroid = new Point(0, 0, 0);
+    double signedArea = 0.0;
+    double x0 = 0.0; // Current vertex X
+    double y0 = 0.0; // Current vertex Y
+    double x1 = 0.0; // Next vertex X
+    double y1 = 0.0; // Next vertex Y
+    double a = 0.0;  // Partial signed area
+    double centerx = 0.0;
+    double centery = 0.0;
+    // For all vertices
+    
+    for (int i=0; i<mPoints.size(); ++i)
+    {
+        x0 = mPoints.get(i).getX();
+        y0 = mPoints.get(i).getY();
+        x1 = mPoints.get((i+1) % mPoints.size()).getX();
+        y1 = mPoints.get((i+1) % mPoints.size()).getY();
+        a = x0*y1 - x1*y0;
+        signedArea += a;
+        centerx += (x0 + x1)*a;
+        centery += (y0 + y1)*a;
+    }
+
+    signedArea *= 0.5;
+    centerx /= (6.0*signedArea);
+    centery /= (6.0*signedArea);
+    
+    centroid.setX(centerx);
+    centroid.setY(centery);
+
+    return centroid;
     }
     
     private static double[] compare(double[] tab){
