@@ -5,42 +5,44 @@
  */
 package triangulation;
 
+import java.math.BigDecimal;
+
 /**
  *
  * @author user
  */
 public class Point {
-    private double x;
-    private double y;
-    private double r;
+    private BigDecimal x;
+    private BigDecimal y;
+    private BigDecimal r;
     
-    Point(double mx, double my, double mr){
+    Point(BigDecimal mx, BigDecimal my, BigDecimal mr){
         x = mx;
         y = my;
         r = mr;
     }
     
-   double getX(){
+   BigDecimal getX(){
        return x;
    }
    
-   double getY(){
+   BigDecimal getY(){
        return y;
    }
    
-   double getR(){
+   BigDecimal getR(){
        return r;
    }
    
-   void setX(double mx){
+   void setX(BigDecimal mx){
        x = mx;
    }
    
-   void setY(double my){
+   void setY(BigDecimal my){
        y = my;
    }
    
-   void setR(double mr){
+   void setR(BigDecimal mr){
        r = mr;
    }
 }

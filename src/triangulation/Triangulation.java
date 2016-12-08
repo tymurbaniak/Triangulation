@@ -4,6 +4,8 @@
  * and open the template in the editor.
  */
 package triangulation;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -91,6 +93,7 @@ public class Triangulation {
     /**
      * @param args the command line arguments
      */
+    private static int precision = 40;
     public static void main(String[] args) {
         ArrayList<Point> points = new ArrayList<Point>();
 //        points.add(new Point(0, 0, 1));
@@ -99,21 +102,21 @@ public class Triangulation {
 //        points.add(new Point(0, 0, 1));
 //        points.add(new Point(0, 2, 1));
 //        points.add(new Point(2, 0, 1));
-        points.add(new Point(0, 0, 1));
-        points.add(new Point(43, 0, 2));
-        points.add(new Point(0, -40, 4));
-        points.add(new Point(43, -40, 5));
+        points.add(new Point(new BigDecimal("17.01820382"), new BigDecimal("53.90794026"), new BigDecimal("0.00000000000000000089")));
+        points.add(new Point(new BigDecimal("17.0182951"), new BigDecimal("53.9078353"), new BigDecimal("0.00000000000000000089")));
+        points.add(new Point(new BigDecimal("17.0183422"), new BigDecimal("53.9077724"), new BigDecimal("0.00000000000000000086")));
+        points.add(new Point(new BigDecimal("17.01839036"), new BigDecimal("53.90767927"), new BigDecimal("0.00000000000000000086")));
         ArrayList<Powerline> powerlines = computePowerlines(points);
         for(int i=0; i<powerlines.size(); i++){
             System.out.println(powerlines.get(i).getYFactor() + "*y = " + powerlines.get(i).getXFactor() + "*x + " + powerlines.get(i).getConstant());
         }
         ArrayList<Point> computedPoints = figureVertices(powerlines);
         for(int i = 0; i<computedPoints.size(); i++){
-            System.out.println(computedPoints.get(i).getX() + " , " + computedPoints.get(i).getY());
+            System.out.println(computedPoints.get(i).getY() + " , " + computedPoints.get(i).getX());
         }
         Point center = computeCentroid(computedPoints);
         System.out.println("------------");
-        System.out.println(String.valueOf(center.getX()) + " , " + String.valueOf(center.getY()));
+        System.out.println(String.valueOf(center.getY()) + " , " + String.valueOf(center.getX()));
 //        try {
 //            getNetworks();
 //        } catch (ClassNotFoundException ex) {
@@ -128,29 +131,29 @@ public class Triangulation {
      * @param ax2
      * @param by2
      * @param c2
-     * @return returns table of cordinates in form of [double x, double y] or returns null if denouement is indetermined or conflicted
+     * @return returns table of cordinates in form of [BigDecimal x, BigDecimal y] or returns null if denouement is indetermined or conflicted
      */
-    private static double[] determinants(double ax1, double by1, double c1, double ax2, double by2, double c2) {
+    private static BigDecimal[] determinants(BigDecimal ax1, BigDecimal by1, BigDecimal c1, BigDecimal ax2, BigDecimal by2, BigDecimal c2) {
         
-        double w = (ax1*-by2) - (-by1*ax2);
-        double wx = (-c1*-by2) - (-by1*-c2);
-        double wy = (ax1*-c2) - (-c1*ax2);
-        if(w==0){
+        BigDecimal w = ax1.multiply(by2.negate()).subtract(by1.negate().multiply(ax2));
+        BigDecimal wx = c1.negate().multiply(by2.negate()).subtract(by1.negate().multiply(c2.negate()));
+        BigDecimal wy = ax1.multiply(c2.negate()).subtract(c1.negate().multiply(ax2));
+        if(w.compareTo(new BigDecimal("0")) == 0){
             return null;
         }else{
-            double[] tab = {(wx/w),(wy/w)};
+            BigDecimal[] tab = {(wx.divide(w, precision, RoundingMode.HALF_UP)),(wy.divide(w, precision, RoundingMode.HALF_UP))};
             return tab;
         }
     }
     private static ArrayList<Point> figureVertices(ArrayList<Powerline> lines){
         ArrayList<Point> mPoints = new ArrayList<Point>();
-        double[] buff = new double[2];
+        BigDecimal[] buff = new BigDecimal[2];
         for(int i=0; i<lines.size(); i++){
             for(int j=i+1; j<lines.size(); j++){
                 buff = determinants(lines.get(i).getXFactor(), lines.get(i).getYFactor(), lines.get(i).getConstant(),
                         lines.get(j).getXFactor(),lines.get(j).getYFactor(),lines.get(j).getConstant());
                 if(buff != null){
-                    mPoints.add(new Point(buff[0], buff[1], 0));
+                    mPoints.add(new Point(buff[0], buff[1], new BigDecimal("0")));
                 }
             }
         }
@@ -167,15 +170,16 @@ public class Triangulation {
         return listOfPowerlines;
     }
     private static Point computeCentroid(ArrayList<Point> mPoints){
-    Point centroid = new Point(0, 0, 0);
-    double signedArea = 0.0;
-    double x0 = 0.0; // Current vertex X
-    double y0 = 0.0; // Current vertex Y
-    double x1 = 0.0; // Next vertex X
-    double y1 = 0.0; // Next vertex Y
-    double a = 0.0;  // Partial signed area
-    double centerx = 0.0;
-    double centery = 0.0;
+    BigDecimal zero = new BigDecimal("0");
+    Point centroid = new Point(zero, zero, zero);
+    BigDecimal signedArea = zero;
+    BigDecimal x0 = zero; // Current vertex X
+    BigDecimal y0 = zero; // Current vertex Y
+    BigDecimal x1 = zero; // Next vertex X
+    BigDecimal y1 = zero; // Next vertex Y
+    BigDecimal a = zero;  // Partial signed area
+    BigDecimal centerx = zero;
+    BigDecimal centery = zero;
     // For all vertices
     
     for (int i=0; i<mPoints.size(); ++i)
@@ -184,15 +188,14 @@ public class Triangulation {
         y0 = mPoints.get(i).getY();
         x1 = mPoints.get((i+1) % mPoints.size()).getX();
         y1 = mPoints.get((i+1) % mPoints.size()).getY();
-        a = x0*y1 - x1*y0;
-        signedArea += a;
-        centerx += (x0 + x1)*a;
-        centery += (y0 + y1)*a;
+        a = x0.multiply(y1).subtract(x1.multiply(y0));
+        signedArea = signedArea.add(a);
+        centerx = centerx.add(x0.add(x1).multiply(a));
+        centery = centery.add(y0.add(y1).multiply(a));
     }
-
-    signedArea *= 0.5;
-    centerx /= (6.0*signedArea);
-    centery /= (6.0*signedArea);
+    signedArea = signedArea.multiply(new BigDecimal("0.5"));
+    centerx = centerx.divide(signedArea.multiply(new BigDecimal("6")), precision, RoundingMode.HALF_UP);
+    centery = centery.divide(signedArea.multiply(new BigDecimal("6")), precision, RoundingMode.HALF_UP);
     
     centroid.setX(centerx);
     centroid.setY(centery);
@@ -200,7 +203,7 @@ public class Triangulation {
     return centroid;
     }
     
-    private static double[] compare(double[] tab){
+    private static BigDecimal[] compare(BigDecimal[] tab){
         if(tab[0] == tab[1]){
             System.out.println("test");
             return null;
