@@ -12,12 +12,15 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.ResultSet;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.nevec.rjm.BigDecimalMath;
 
 /**
  *
@@ -30,99 +33,146 @@ public class Triangulation {
      * Will return ArrayList<WiFiNetwork>
      * @throws ClassNotFoundException 
      */
-//    static void getNetworks() throws ClassNotFoundException{
-//        ArrayList<ArrayList<WiFiNetwork>> groupedNetworks = new ArrayList<ArrayList<WiFiNetwork>>();
-//        ArrayList<WiFiNetwork> networkGroupTemp = new ArrayList<WiFiNetwork>();
-//        Set<String> ssidSet = new HashSet<String>();
-//        Class.forName("org.sqlite.JDBC");
-//        Connection connection = null;
-//        try{
-//            connection = DriverManager.getConnection("jdbc:sqlite:C:/Users/user/Documents/NetBeansProjects/Triangulation/src/res/wifipicker.db");
-//            Statement statement = connection.createStatement();
-//            statement.setQueryTimeout(30);
-//            ResultSet networkList = statement.executeQuery("SELECT * FROM WIFINETWORKS");
-//            while(networkList.next()){
-//                ssidSet.add(networkList.getString("BSSID"));
-//            }
-//            //ssidSet.forEach(System.out::println);
-//            Iterator iter = ssidSet.iterator();
-//            while(iter.hasNext()){
-//                ResultSet networkGroup = statement.executeQuery("SELECT * FROM WIFINETWORKS WHERE BSSID = '"+iter.next()+"'");
-//                while(networkGroup.next()){
-//                    networkGroupTemp.add(new WiFiNetwork(networkList.getString("BSSID"),
-//                                            networkList.getString("CAPABILITIES"),
-//                                            networkList.getInt("FREQUENCY"),
-//                                            networkList.getLong("ID"),
-//                                            networkList.getDouble("LATITUDE"),
-//                                            networkList.getInt("LEVEL"),
-//                                            networkList.getDouble("LONGITUTDE"),
-//                                            networkList.getString("SSID"),
-//                                            networkList.getString("TIMESTAMPDATETIME"),
-//                                            networkList.getBoolean("triangulated")));
+    static void getNetworks() throws ClassNotFoundException{
+        ArrayList<ArrayList<WiFiNetwork>> groupedNetworks = new ArrayList<ArrayList<WiFiNetwork>>();
+        ArrayList<WiFiNetwork> networkGroupTemp = new ArrayList<WiFiNetwork>();
+        Set<String> ssidSet = new HashSet<String>();
+        Class.forName("org.sqlite.JDBC");
+        Connection connection = null;
+        try{
+            connection = DriverManager.getConnection("jdbc:sqlite:C:/Users/user/Documents/NetBeansProjects/Triangulation/src/res/wifipicker.db");
+            Statement statement = connection.createStatement();
+            statement.setQueryTimeout(30);
+            ResultSet networkList = statement.executeQuery("SELECT * FROM WIFINETWORKS");
+            while(networkList.next()){
+                ssidSet.add(networkList.getString("BSSID"));
+            }
+            //ssidSet.forEach(System.out::println);
+            Iterator iter = ssidSet.iterator();
+            while(iter.hasNext()){
+                ArrayList<Point> points = new ArrayList<Point>();
+                points.clear();
+                ResultSet networkGroup = statement.executeQuery("SELECT * FROM WIFINETWORKS WHERE BSSID = '"+iter.next()+"'");
+                networkGroupTemp.clear();
+                while(networkGroup.next()){
+                    networkGroupTemp.add(new WiFiNetwork(networkList.getString("BSSID"),
+                                            networkList.getString("CAPABILITIES"),
+                                            networkList.getInt("FREQUENCY"),
+                                            networkList.getLong("ID"),
+                                            networkList.getDouble("LATITUDE"),
+                                            networkList.getInt("LEVEL"),
+                                            networkList.getDouble("LONGITUTDE"),
+                                            networkList.getString("SSID"),
+                                            networkList.getString("TIMESTAMPDATETIME"),
+                                            networkList.getBoolean("triangulated")));
+                    if((networkList.getDouble("LONGITUTDE") != 0) && (networkList.getDouble("LATITUDE") != 0)){
+                        points.add(new Point(new BigDecimal(networkList.getDouble("LONGITUTDE")), new BigDecimal(networkList.getDouble("LATITUDE")), new BigDecimal(networkList.getInt("LEVEL")).divide(new BigDecimal("10000000"))));
+                    }
+                }
+                ArrayList<Point> newPoints = normalize(points);
+                System.out.println("-----------" + networkGroupTemp.get(0).getSsid());
+                for(int i=0; i<points.size(); i++){
+                    System.out.println(points.get(i).getX() + " , " + points.get(i).getY());
+                }
+                for(int i=0; i<newPoints.size(); i++){
+                    System.out.println(newPoints.get(i).getX() + " , " + newPoints.get(i).getY());
+                }
+                ArrayList<Powerline> powerlines = computePowerlines(newPoints);
+//                for(int i=0; i<powerlines.size(); i++){
+//                    System.out.println("y = " + powerlines.get(i).getXFactor() + "*x + " + powerlines.get(i).getConstant() + "; plot(x,y);");
 //                }
-//                computeLocation(networkGroupTemp);
-//                networkGroupTemp.clear();
-//            }
-//            /*
-//            while(networkList.next()){
-//                System.out.println("SSID: " + networkList.getString("SSID")
-//                + " Level: " + networkList.getString("LEVEL")
-//                + "Longitude: " + networkList.getString("LONGITUTDE")
-//                + "Latitude: " + networkList.getString("LATITUDE"));
-//            bufferlist.add(new WiFiNetwork(networkList.getString("BSSID"),
-//                                            networkList.getString("CAPABILITIES"),
-//                                            networkList.getInt("FREQUENCY"),
-//                                            networkList.getLong("ID"),
-//                                            networkList.getDouble("LATITUDE"),
-//                                            networkList.getInt("LEVEL"),
-//                                            networkList.getDouble("LONGITUTDE"),
-//                                            networkList.getString("SSID"),
-//                                            networkList.getString("TIMESTAMPDATETIME"),
-//                                            networkList.getBoolean("triangulated")));
-//            }*/
-//        }catch(SQLException e){
-//            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-//            System.exit(0);
-//        }
-//    }
-    /*
-    Point weightCenter(ArrayList<powerline> powerlines){
-        
+                ArrayList<Point> computedPoints = figureVertices(powerlines);
+//                for(int i = 0; i<computedPoints.size(); i++){
+//                    System.out.println(computedPoints.get(i).getY() + " , " + computedPoints.get(i).getX());
+//                }
+                if(computedPoints.size() > 2){
+                    System.out.println("-----------");
+//                    Point center = computeCentroid(computedPoints);
+//                    System.out.println(String.valueOf(center.getY()) + " , " + String.valueOf(center.getX()));
+//                    System.out.println("-----------");
+                }
+            }
+        }catch(SQLException e){
+            System.err.println( e.getClass().getName() + ": " + e.getMessage() );
+            System.exit(0);
+        }
     }
-    */
+
     /**
      * @param args the command line arguments
      */
     private static int precision = 40;
     public static void main(String[] args) {
-        ArrayList<Point> points = new ArrayList<Point>();
+        
 //        points.add(new Point(0, 0, 1));
 //        points.add(new Point(0, 2, 1));
 //        points.add(new Point(3, 1, 2));
 //        points.add(new Point(0, 0, 1));
 //        points.add(new Point(0, 2, 1));
 //        points.add(new Point(2, 0, 1));
-        points.add(new Point(new BigDecimal("17.01820382"), new BigDecimal("53.90794026"), new BigDecimal("0.00000000000000000089")));
-        points.add(new Point(new BigDecimal("17.0182951"), new BigDecimal("53.9078353"), new BigDecimal("0.00000000000000000089")));
-        points.add(new Point(new BigDecimal("17.0183422"), new BigDecimal("53.9077724"), new BigDecimal("0.00000000000000000086")));
-        points.add(new Point(new BigDecimal("17.01839036"), new BigDecimal("53.90767927"), new BigDecimal("0.00000000000000000086")));
-        ArrayList<Powerline> powerlines = computePowerlines(points);
-        for(int i=0; i<powerlines.size(); i++){
-            System.out.println(powerlines.get(i).getYFactor() + "*y = " + powerlines.get(i).getXFactor() + "*x + " + powerlines.get(i).getConstant());
+//        points.add(new Point(new BigDecimal("17.01820382"), new BigDecimal("53.90794026"), new BigDecimal("0.000712")));
+//        points.add(new Point(new BigDecimal("17.0182951"), new BigDecimal("53.9078353"), new BigDecimal("0.000712")));
+//        points.add(new Point(new BigDecimal("17.0183422"), new BigDecimal("53.9077724"), new BigDecimal("0.000688")));
+//        points.add(new Point(new BigDecimal("17.01839036"), new BigDecimal("53.90767927"), new BigDecimal("0.000688")));
+//        points.add(new Point(new BigDecimal("16.97098234"), new BigDecimal("53.99411274"), new BigDecimal("0.000088")));
+//        points.add(new Point(new BigDecimal("16.971329"), new BigDecimal("53.9943963"), new BigDecimal("0.000088")));
+//        points.add(new Point(new BigDecimal("16.97117051"), new BigDecimal("53.994024"), new BigDecimal("0.000088")));
+        
+        try {
+            getNetworks();
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(Triangulation.class.getName()).log(Level.SEVERE, null, ex);
         }
-        ArrayList<Point> computedPoints = figureVertices(powerlines);
-        for(int i = 0; i<computedPoints.size(); i++){
-            System.out.println(computedPoints.get(i).getY() + " , " + computedPoints.get(i).getX());
-        }
-        Point center = computeCentroid(computedPoints);
-        System.out.println("------------");
-        System.out.println(String.valueOf(center.getY()) + " , " + String.valueOf(center.getX()));
-//        try {
-//            getNetworks();
-//        } catch (ClassNotFoundException ex) {
-//            Logger.getLogger(Triangulation.class.getName()).log(Level.SEVERE, null, ex);
-//        }
     }
+//    private static ArrayList<Point> convertToCartesian(ArrayList<Point> points){
+//        
+//    }
+    private static ArrayList<Point> sortPoints(ArrayList<Point> points){
+        Point buff;
+        Collections.sort(points, new Comparator<Point>(){
+            @Override
+            public int compare(Point point1, Point point2){
+                return point1.getX().compareTo(point2.getX());
+            }
+        });
+        return points;
+    }
+    private static final BigDecimal R = new BigDecimal("6372.8"); // In kilometers
+    private static BigDecimal haversine(BigDecimal lat1, BigDecimal lon1, BigDecimal lat2, BigDecimal lon2) {
+        BigDecimal dLat = (lat2.subtract(lat1)).multiply(new BigDecimal(Math.PI).divide(new BigDecimal("180")));
+        BigDecimal dLon = (lon2.subtract(lon1)).multiply(new BigDecimal(Math.PI).divide(new BigDecimal("180")));
+        //BigDecimal dLon = Math.toRadians(lon2 - lon1);
+        lat1 = lat1.multiply(new BigDecimal(Math.PI).divide(new BigDecimal("180")));
+        lat2 = lat2.multiply(new BigDecimal(Math.PI).divide(new BigDecimal("180")));
+ 
+        BigDecimal a =  BigDecimalMath.powRound(BigDecimalMath.sin(dLat.divide(new BigDecimal("2"))), 2).add( 
+            BigDecimalMath.powRound(BigDecimalMath.sin(dLon.divide(new BigDecimal("2"))), 2).multiply(
+                BigDecimalMath.cos(lat1).multiply(lat1)
+            )
+        );
+        BigDecimal c = new BigDecimal("2").multiply(BigDecimalMath.asin(BigDecimalMath.sqrt(a)));
+        //BigDecimal c = 2 * Math.asin(Math.sqrt(a));
+        return R.multiply(c);
+    }
+    private static ArrayList<Point> normalize(ArrayList<Point> points){
+        Point returnPoint = points.get(0);
+        ArrayList<Point> retArray = new ArrayList<Point>();
+        for(int i = 0; i < points.size(); i++){
+            retArray.add(new Point(points.get(i).getX().subtract(returnPoint.getX()),
+                                points.get(i).getY().subtract(returnPoint.getY()),
+                                points.get(i).getR()));
+//            points.get(i).setX(points.get(i).getX().subtract(returnPoint.getX()));
+//            points.get(i).setY(points.get(i).getY().subtract(returnPoint.getY()));
+        }
+        retArray.add(returnPoint);
+        return retArray;
+    } 
+//    private static ArrayList<Point> convertToCordinates(ArrayList<Point> points){
+//        
+//    }
+//    private static ArrayList<Point> denormalize(ArrayList<Point> points){
+//        
+//    }
     /**
      * 
      * @param ax1
@@ -164,6 +214,7 @@ public class Triangulation {
         ArrayList<Powerline> listOfPowerlines = new ArrayList<Powerline>();
         for(int i=0; i<mPoints.size(); i++){
             for(int j=i+1; j<mPoints.size(); j++){
+                if((mPoints.get(j).getY().subtract(mPoints.get(i).getY())).compareTo(BigDecimal.ZERO) != 0)
                 listOfPowerlines.add(new Powerline(mPoints.get(i), mPoints.get(j)));
             }
         }
